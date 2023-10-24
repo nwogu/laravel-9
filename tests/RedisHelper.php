@@ -1,17 +1,20 @@
 <?php
 
-namespace App\Utilities\Contracts;
+namespace Tests;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Redis;
+use App\Utilities\Contracts\RedisHelperInterface;
 
-interface RedisHelperInterface {
+class RedisHelper implements RedisHelperInterface
+{
+    private static array $recents = [];
+
     /**
      * Store the id of a message along with a message subject in Redis.
      *
      * @param  mixed  $id
      * @param  string  $messageSubject
      * @param  string  $toEmailAddress
-     * @param  string  $messageBody
      * @return void
      */
     public function storeRecentMessage(
@@ -19,12 +22,22 @@ interface RedisHelperInterface {
         string $messageSubject,
         string $toEmailAddress,
         string $messageBody
-    ): void;
+    ): void
+    {
+        self::$recents[$id][] = [
+            'subject' => $messageSubject,
+            'email' => $toEmailAddress,
+            'body' => $messageBody
+        ];
+    }
 
     /**
      * Get the recent messages for a given id in Redis.
      * @param  mixed  $id
      * @return array
      */
-    public function getRecentMessages(mixed $id): array;
+    public function getRecentMessages(mixed $id): array
+    {
+        return self::$recents[$id] ?? [];
+    }
 }

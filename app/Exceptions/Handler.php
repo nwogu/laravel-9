@@ -2,8 +2,12 @@
 
 namespace App\Exceptions;
 
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 class Handler extends ExceptionHandler
 {
@@ -36,6 +40,22 @@ class Handler extends ExceptionHandler
     {
         $this->reportable(function (Throwable $e) {
             //
+        });
+
+        $this->renderable(function (ModelNotFoundException $e, $request) {
+            return response()->json(["message" => "Resource not found"], 404);
+        });
+
+        $this->renderable(function (NotFoundHttpException $e, $request) {
+            return response()->json(["message" => "Resource not found"], 404);
+        });
+
+        $this->renderable(function (AccessDeniedHttpException $e, $request) {
+            return response()->json(["message" => $e->getMessage()], $e->getStatusCode());
+        });
+
+        $this->renderable(function (AuthenticationException $e, $request) {
+            return response()->json(["message" => "Authentication failed"], 401);
         });
     }
 }

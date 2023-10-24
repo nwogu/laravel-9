@@ -1,28 +1,45 @@
 <p align="center"><a href="https://autoklose.com" target="_blank"><img src="https://app.autoklose.com/images/svg/autoklose-logo-white.svg" width="400"></a></p>
 
 ## Instructions
-The repository for the assignment is public and Github does not allow the creation of private forks for public repositories.
+After cloning repository and running composer commands.
 
-The correct way of creating a private fork by duplicating the repo is documented here.
+### Start dependencies
+```vendor/bin/sail up -d``` to start sail
 
-For this assignment the commands are:
+### Generate API Token
+```php artisan app:generate-api-token test@sample.com 123456 --create=TestUser``` to generate api token. Copy the output
 
-Create a bare clone of the repository.
+### Send Emails
+```POST api/send?api_token={token generated from previous command}```
 
-git clone --bare git@github.com:autoklose/laravel-9.git
-Create a new private repository on Github and name it laravel-9.
+```json
+{
+  "emails": [
+    {
+      "email": "test1@gmail.com",
+      "subject": "Test subject",
+      "body": "test body"
+    },
+    {
+      "email": "test2@gmail.com",
+      "subject": "Test tubject",
+      "body": "test body 2"
+    },
+    {
+      "email": "test3@gmail.com",
+      "subject": "Test tubject 3",
+      "body": "test body 3"
+    }
+  ]
+}
+```
 
-Mirror-push your bare clone to your new repository.
+### Fetch Recently sent emails
+```GET api/list?api_token={token generated from previous command}```
 
-Replace <your_username> with your actual Github username in the url below.
+### Search within recently sent emails
+```GET api/list?search=test3&api_token={token generated from previous command}```
 
-cd laravel-9.git
-git push --mirror git@github.com:<your_username>/laravel-9.git
-Remove the temporary local repository you created in step 1.
+## Testing
 
-cd ..
-rm -rf laravel-9.git
-You can now clone your laravel-9 repository on your machine (in my case in the code folder).
-
-cd ~/code
-git clone git@github.com:<your_username>/laravel-9.git
+```vendor/bin/sail artisan test```
