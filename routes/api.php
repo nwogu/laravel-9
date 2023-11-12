@@ -19,5 +19,5 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::middleware('auth:sanctum')->post('/send', [EmailController::class, 'send']);
+Route::middleware('auth:sanctum')->post('/{user}/send', [EmailController::class, 'send']);
 Route::middleware('auth:sanctum')->get('/list', [EmailController::class, 'list']);

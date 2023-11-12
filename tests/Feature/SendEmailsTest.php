@@ -40,7 +40,7 @@ class SendEmailsTest extends TestCase
         ];
 
 
-        $response = $this->post('/api/send?api_token='.$token, ['emails' => $data]);
+        $response = $this->post("/api/{$user->id}/send?api_token=".$token, ['emails' => $data]);
 
         Queue::assertPushed(function (\App\Jobs\SendEmailBatchJob $job) use ($user) {
             return $job->batch->id === \App\Models\MailMessageBatch::current()->id;
@@ -67,7 +67,7 @@ class SendEmailsTest extends TestCase
             ],
         ];
 
-        $response = $this->post('/api/send?api_token='.$token, ['emails' => $data]);
+        $response = $this->post("/api/{$user->id}/send?api_token={$token}", ['emails' => $data]);
 
         Queue::assertNotPushed(\App\Jobs\SendEmailBatchJob::class);
         $response->assertStatus(422);

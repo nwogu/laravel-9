@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Jobs\SendEmail;
 use App\Mail\UserEmail;
 use App\Models\MailMessage;
@@ -16,7 +17,7 @@ use App\Utilities\Contracts\ElasticsearchHelperInterface;
 class EmailController extends Controller
 {
     // TODO: finish implementing send method
-    public function send(SendEmailRequest $request)
+    public function send(SendEmailRequest $request, User $user)
     {
         $emailData = [];
         $mailMessageBatch = MailMessageBatch::current();
