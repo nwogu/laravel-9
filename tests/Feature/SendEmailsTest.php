@@ -39,21 +39,11 @@ class SendEmailsTest extends TestCase
             ]
         ];
 
+
         $response = $this->post('/api/send?api_token='.$token, ['emails' => $data]);
-        $redisHelper = $this->app->make(\App\Utilities\Contracts\RedisHelperInterface::class);
-        $elasticsearchHelper = $this->app->make(\App\Utilities\Contracts\ElasticsearchHelperInterface::class);
 
-        $this->assertEquals(
-            $data,
-            $redisHelper->getRecentMessages($user->id)
-        );
-
-        $this->assertTrue(
-            $elasticsearchHelper->hasIndex($user->id)
-        );
-
-        Queue::assertPushed(function (\App\Jobs\SendEmail $job) use ($user) {
-            return $job->user->id === $user->id;
+        Queue::assertPushed(function (\App\Jobs\SendEmailBatchJob $job) use ($user) {
+            return $job->batch->id === \App\Models\MailMessageBatch::current()->id;
         });
 
         $response->assertStatus(200);
@@ -79,7 +69,7 @@ class SendEmailsTest extends TestCase
 
         $response = $this->post('/api/send?api_token='.$token, ['emails' => $data]);
 
-        Queue::assertNotPushed(\App\Jobs\SendEmail::class);
+        Queue::assertNotPushed(\App\Jobs\SendEmailBatchJob::class);
         $response->assertStatus(422);
     }
 

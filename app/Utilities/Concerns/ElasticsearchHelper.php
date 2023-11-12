@@ -2,6 +2,8 @@
 
 namespace App\Utilities\Concerns;
 
+use App\Models\MailMessage;
+use Illuminate\Support\Arr;
 use App\Utilities\Contracts\ElasticsearchHelperInterface;
 
 class ElasticsearchHelper implements ElasticsearchHelperInterface
@@ -10,7 +12,6 @@ class ElasticsearchHelper implements ElasticsearchHelperInterface
     /**
      * Store the email's message body, subject and to address inside elasticsearch.
      *
-     * @param  mixed  $id We want to scope the search to the user who sends the message, to avoid data leak
      * @param  string  $messageBody
      * @param  string  $messageSubject
      * @param  string  $toEmailAddress
@@ -20,8 +21,9 @@ class ElasticsearchHelper implements ElasticsearchHelperInterface
     {
         try {
             return app('elasticsearch')->index([
-                'index' => 'emails_'. $id,
+                'index' => 'emails',
                 'body' => [
+                    'id' => $id,
                     'subject' => $messageSubject,
                     'email' => $toEmailAddress,
                     'body' => $messageBody,
@@ -37,14 +39,13 @@ class ElasticsearchHelper implements ElasticsearchHelperInterface
      * Search for emails in Elasticsearch.
      *
      * @param  string  $query
-     * @param  mixed  $id We want to scope the search to the user who sends the message, to avoid data leak
      * @return array
      */
-    public function searchEmails(string $query, mixed $id): array
+    public function searchEmails(string $query): array
     {
         try {
             $response = app('elasticsearch')->search([
-                'index' => 'emails_'. $id,
+                'index' => 'emails',
                 'body' => [
                     'query' => [
                         'multi_match' => [

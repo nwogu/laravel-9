@@ -13,22 +13,15 @@ class RedisHelper implements RedisHelperInterface
      * Store the id of a message along with a message subject in Redis.
      *
      * @param  mixed  $id
-     * @param  string  $messageSubject
-     * @param  string  $toEmailAddress
+     * @param array $messageCollection
      * @return void
      */
     public function storeRecentMessage(
         mixed $id,
-        string $messageSubject,
-        string $toEmailAddress,
-        string $messageBody
+        array $messageCollection
     ): void
     {
-        self::$recents[$id][] = [
-            'subject' => $messageSubject,
-            'email' => $toEmailAddress,
-            'body' => $messageBody
-        ];
+        self::$recents[$id] = $messageCollection;
     }
 
     /**

@@ -2,10 +2,11 @@
 
 namespace App\Jobs;
 
-use App\Models\User;
 use App\Mail\UserEmail;
+use App\Models\MailMessage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Fluent;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -17,17 +18,14 @@ class SendEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public Fluent $email;
-
-    public User $user;
+    public MailMessage $mailMessage;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(array $email, User $user)
+    public function __construct(MailMessage $mailMessage)
     {
-        $this->email = new Fluent($email);
-        $this->user = $user;
+        $this->mailMessage = $mailMessage;
     }
 
     /**
@@ -35,13 +33,23 @@ class SendEmail implements ShouldQueue
      */
     public function handle(): void
     {
-        Mail::to($this->email->email)
-            ->send(new UserEmail(
-                $this->email->subject,
-                $this->email->body,
-                $this->user->email
-            )
-        );
-        $this->user->touch('last_email_sent_at');
+        try {
+            Mail::to($this->mailMessage->email)
+                ->send(new UserEmail(
+                    $this->mailMessage->subject,
+                    $this->mailMessage->body,
+                    $this->mailMessage->user->email
+                )
+            );
+            $this->mailMessage->markAsSent();
+            $this->mailMessage->indexSentEmail();
+        } catch (\Throwable $th) {
+            Log::error($th->getMessage());
+        }
+        finally {
+            $this->mailMessage->update([
+                'processed_at' => now(),
+            ]);
+        }
     }
 }

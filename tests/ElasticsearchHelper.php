@@ -19,7 +19,8 @@ class ElasticsearchHelper implements ElasticsearchHelperInterface
     public function storeEmail(mixed $id, string $messageBody, string $messageSubject, string $toEmailAddress): mixed
     {
         try {
-            self::$indices[$id][] = [
+            self::$indices['emails'][] = [
+                'id' => $id,
                 'subject' => $messageSubject,
                 'email' => $toEmailAddress,
                 'body' => $messageBody,
@@ -35,27 +36,26 @@ class ElasticsearchHelper implements ElasticsearchHelperInterface
      * Search for emails in Elasticsearch.
      *
      * @param  string  $query
-     * @param  mixed  $id We want to scope the search to the user who sends the message, to avoid data leak
      * @return array
      */
-    public function searchEmails(string $query, mixed $id): array
+    public function searchEmails(string $query): array
     {
         try {
-            return collect(self::$indices[$id] ?? [])
+            return collect(self::$indices['emails'] ?? [])
                 ->filter(function ($email) use ($query) {
                     return str_contains($email['subject'], $query)
                         || str_contains($email['email'], $query)
                         || str_contains($email['body'], $query);
                 })
-                ->toArray();
+                ->values()->toArray();
         } catch(\Exception $e) {
             // Log the error
             return [];
         }
     }
 
-    public function hasIndex(mixed $id): bool
+    public function hasIndex(): bool
     {
-        return isset(self::$indices[$id]);
+        return isset(self::$indices['emails']);
     }
 }

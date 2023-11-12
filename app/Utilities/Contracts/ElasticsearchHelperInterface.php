@@ -16,8 +16,7 @@ interface ElasticsearchHelperInterface {
     /**
      * Search for emails in Elasticsearch.
      * @param  string  $query
-     * @param  mixed  $id
      * @return array
      */
-    public function searchEmails(string $query, mixed $id): array;
+    public function searchEmails(string $query): array;
 }

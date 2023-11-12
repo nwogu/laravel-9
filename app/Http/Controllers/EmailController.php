@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Jobs\SendEmail;
 use App\Mail\UserEmail;
+use App\Models\MailMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Fluent;
+use App\Models\MailMessageBatch;
 use Illuminate\Support\Facades\Mail;
 use App\Http\Requests\SendEmailRequest;
 use App\Utilities\Contracts\RedisHelperInterface;
@@ -16,27 +18,23 @@ class EmailController extends Controller
     // TODO: finish implementing send method
     public function send(SendEmailRequest $request)
     {
-        /** @var ElasticsearchHelperInterface $elasticsearchHelper */
-        $elasticsearchHelper = app()->make(ElasticsearchHelperInterface::class);
-
-        /** @var RedisHelperInterface $redisHelper */
-        $redisHelper = app()->make(RedisHelperInterface::class);
+        $emailData = [];
+        $mailMessageBatch = MailMessageBatch::current();
+        $userId = $request->user()->id;
 
         collect($request->emails)
-            ->map(fn ($email) => new Fluent($email))
-            ->each(fn ($email) => SendEmail::dispatch($email->toArray(), $request->user()))
-            ->each(fn ($email) => $redisHelper->storeRecentMessage(
-                $request->user()->id,
-                $email->subject,
-                $email->email,
-                $email->body
-            ))
-            ->each(fn ($email) => $elasticsearchHelper->storeEmail(
-                $request->user()->id,
-                $email->body,
-                $email->subject,
-                $email->email,
-            ));
+            ->each(function($email) use (&$emailData, $mailMessageBatch, $userId) {
+                $emailData[] = [
+                'subject' => $email['subject'],
+                'body' => $email['body'],
+                'email' => $email['email'],
+                'user_id' => $userId,
+                'mail_message_batch_id' => $mailMessageBatch->id,
+                ];
+            });
+
+        MailMessage::insert($emailData);
+        $mailMessageBatch->process();
 
         return response()->json(['message' => 'Emails queued successfully']);
     }
@@ -48,14 +46,14 @@ class EmailController extends Controller
             /** @var ElasticsearchHelperInterface $elasticsearchHelper */
             $elasticsearchHelper = app()->make(ElasticsearchHelperInterface::class);
 
-            $emails = $elasticsearchHelper->searchEmails($request->search, $request->user()->id);
+            $emails = $elasticsearchHelper->searchEmails($request->search);
 
             return response()->json(['emails' => $emails]);
         }
         /** @var RedisHelperInterface $redisHelper */
         $redisHelper = app()->make(RedisHelperInterface::class);
 
-        $recentMessages = $redisHelper->getRecentMessages(auth()->user()->id);
+        $recentMessages = $redisHelper->getRecentMessages('emails');
 
         return response()->json(['emails' => $recentMessages]);
     }
